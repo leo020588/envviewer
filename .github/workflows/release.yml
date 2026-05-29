@@ -30,6 +30,12 @@ jobs:
       - name: Compile all platforms
         run: bash scripts/compile.sh --all
 
+      - name: Extract release notes
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk "/^## \[$VERSION\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md \
+            > release_notes.txt
+
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
@@ -39,6 +45,5 @@ jobs:
             dist/envviewer-macos-amd64
             dist/envviewer-macos-arm64
             dist/envviewer-windows-amd64.exe
-          body: |
-            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
+          body_path: release_notes.txt
           fail_on_unmatched_files: true
