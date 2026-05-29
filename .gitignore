@@ -1,0 +1,19 @@
+# Compiled binaries
+dist/
+
+# Generated frontend (source is frontend/app.ts)
+frontend/app.js
+
+# Claude Code local state
+.claude/
+
+# Deno cache (when using a local cache dir)
+.deno/
+
+# Editor and OS artifacts
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/

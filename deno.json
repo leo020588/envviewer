@@ -1,0 +1,17 @@
+{
+  "unstable": ["raw-imports"],
+  "tasks": {
+    "transpile": "deno transpile frontend/app.ts -o frontend/app.js",
+    "fmt": "deno fmt",
+    "lint": "deno lint",
+    "test": "deno test src",
+    "check": "deno task transpile && deno task fmt && deno task lint && deno task test",
+    "dev": "deno task transpile && deno run --allow-run --allow-net --allow-write main.ts --no-open",
+    "start": "deno task transpile && deno run --allow-run --allow-net --allow-write main.ts",
+    "compile": "deno task transpile && deno compile --allow-run --allow-net --allow-write --output dist/envviewer main.ts",
+    "compile:all": "scripts/compile.sh --all"
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@^1.0.19"
+  }
+}
