@@ -1,0 +1,44 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: "~2.8"
+
+      - name: Verify tag matches version.ts
+        run: |
+          CODE_VERSION=$(grep 'APP_VERSION' src/version.ts | sed 's/.*"\(.*\)".*/\1/')
+          if [ "$GITHUB_REF_NAME" != "v${CODE_VERSION}" ]; then
+            echo "Error: tag $GITHUB_REF_NAME does not match version.ts (v${CODE_VERSION})"
+            exit 1
+          fi
+
+      - name: Compile all platforms
+        run: bash scripts/compile.sh --all
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/envviewer-linux-amd64
+            dist/envviewer-linux-arm64
+            dist/envviewer-macos-amd64
+            dist/envviewer-macos-arm64
+            dist/envviewer-windows-amd64.exe
+          body: |
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
+          fail_on_unmatched_files: true
