@@ -25,6 +25,16 @@ export function sortEnvironments(envs: string[]): string[] {
   });
 }
 
+export async function unlockVault(): Promise<boolean> {
+  const result = await new Deno.Command("rbw", {
+    args: ["unlock"],
+    stdin: "inherit",
+    stdout: "inherit",
+    stderr: "inherit",
+  }).output();
+  return result.success;
+}
+
 async function run(
   cmd: string,
   args: string[],

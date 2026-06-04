@@ -1,5 +1,5 @@
 import { buildHelpText, parseArgs } from "./src/cli.ts";
-import { syncData } from "./src/rbw.ts";
+import { syncData, unlockVault } from "./src/rbw.ts";
 import { createHandler } from "./src/server.ts";
 import type { MatrixPayload } from "./src/types.ts";
 import { APP_NAME, APP_VERSION } from "./src/version.ts";
@@ -14,6 +14,13 @@ if (help) {
 if (version) {
   console.log(`${APP_NAME} ${APP_VERSION}`);
   Deno.exit(0);
+}
+
+console.log("Unlocking vault…");
+const unlocked = await unlockVault();
+if (!unlocked) {
+  console.error("rbw unlock failed — is rbw configured and the agent running?");
+  Deno.exit(1);
 }
 
 console.log("Syncing vault data…");

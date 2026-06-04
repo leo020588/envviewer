@@ -7,9 +7,14 @@ missing or mismatched configuration across dev, staging, and production.
 
 ## Requirements
 
-- [rbw](https://github.com/doy/rbw) — installed, configured, and **unlocked**
-  before running
+- [rbw](https://github.com/doy/rbw) — installed and configured
 - Vault entries named following the [convention below](#vault-naming-convention)
+
+> **Tip (Linux/GNOME):** By default rbw uses `pinentry-gnome3`, which shows a
+> modal popup that blocks the screen. To get an inline terminal prompt instead,
+> set `"pinentry": "pinentry-curses"` in `~/.config/rbw/config.json`. envviewer
+> calls `rbw unlock` at startup with inherited stdio so a terminal-based
+> pinentry works seamlessly.
 
 ## Installation
 
@@ -93,8 +98,8 @@ envviewer [--port <port>] [--no-open] [--version] [--help]
 ```
 
 Run `envviewer --help` for the full list of options. The server binds to
-`127.0.0.1` only and is not accessible from other machines. Press `?` inside
-the app for keyboard shortcuts.
+`127.0.0.1` only and is not accessible from other machines. Press `?` inside the
+app for keyboard shortcuts.
 
 ## Building from source
 
