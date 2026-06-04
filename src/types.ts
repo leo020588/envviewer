@@ -1,3 +1,8 @@
+export interface CatalogEntry {
+  isSecret: boolean;
+  isInfra: boolean;
+}
+
 export interface ProjectMatrix {
   client: string;
   project: string;
@@ -5,6 +10,7 @@ export interface ProjectMatrix {
   keys: string[];
   data: Record<string, Record<string, string>>;
   entryNames: Record<string, string>; // environment → rbw entry name
+  catalog: Record<string, CatalogEntry>; // variable name → metadata
 }
 
 export interface MatrixPayload {

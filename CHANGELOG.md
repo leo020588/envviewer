@@ -5,13 +5,15 @@ based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Catalog support: `--env-catalog` vault entries annotate variables with 🔑
+  (secret) and 🏗️ (infra) badges instead of appearing as an environment column.
+
 ### Changed
 
-- envviewer now calls `rbw unlock` at startup with inherited stdio before
-  syncing the vault. This enables using `pinentry-curses` (set in
-  `~/.config/rbw/config.json`) for an inline terminal password prompt instead of
-  the default GNOME modal dialog that blocks the screen. If `rbw unlock` fails
-  the app exits immediately with a clear error message.
+- `rbw unlock` is now called at startup with inherited stdio, enabling
+  terminal-based pinentry (e.g. `pinentry-curses`) instead of the GNOME popup.
 
 ## [0.9.0] - 2026-05-29
 

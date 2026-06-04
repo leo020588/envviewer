@@ -398,6 +398,15 @@ function renderCell(
     }">${esc(val)}</span></td>`;
 }
 
+function keyBadges(
+  key: string,
+  catalog: ProjectMatrix["catalog"],
+): string {
+  const entry = catalog[key];
+  if (!entry) return "";
+  return (entry.isSecret ? "🔑" : "") + (entry.isInfra ? "🏗️" : "");
+}
+
 function renderKeyRows(
   proj: ProjectMatrix,
   keys: string[],
@@ -416,11 +425,13 @@ function renderKeyRows(
       change ? `row-${change.type}` : "",
     ].filter(Boolean).join(" ");
     const rowAttr = classes ? ` class="${classes}"` : "";
+    const badges = keyBadges(key, proj.catalog);
+    const badgeHtml = badges ? `<span class="key-badges">${badges}</span>` : "";
     return `<tr${rowAttr}><td class="key-col td-copyable" data-copy="${
       escAttr(key)
     }" title="Click to copy">${
       isMatch ? hilight(key, q) : esc(key)
-    }</td>${cells}</tr>`;
+    }${badgeHtml}</td>${cells}</tr>`;
   }).join("");
 }
 
@@ -457,7 +468,7 @@ function renderMatrix(proj: ProjectMatrix): void {
   let t = "";
   if (proj.environments.length > 1) {
     t += '<div class="env-toggles">';
-    t += '<span class="env-toggle-label">Columns</span>';
+    t += '<span class="env-toggle-label">Environments</span>';
     for (const e of proj.environments) {
       const hidden = state.hiddenEnvs.has(e);
       const canToggle = hidden || visibleEnvs.length > 1;

@@ -1,4 +1,4 @@
-import type { MatrixPayload, ProjectMatrix } from "./types.ts";
+import type { CatalogEntry, MatrixPayload, ProjectMatrix } from "./types.ts";
 
 const ENV_PRIORITY = [
   "development",
@@ -109,6 +109,45 @@ export function parseEnvContent(content: string): Record<string, string> {
   return vars;
 }
 
+export function parseCatalog(
+  csv: string,
+): Record<string, CatalogEntry> {
+  const result: Record<string, CatalogEntry> = {};
+  const lines = csv.split("\n").map((l) => l.trim()).filter((l) => l);
+  if (lines.length < 2) return result;
+
+  const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
+  const varIdx = headers.indexOf("variable");
+  if (varIdx === -1) return result;
+
+  const typeIdx = headers.indexOf("type");
+  const secretIdx = headers.findIndex((h) =>
+    h === "secret" || h === "is_secret" || h === "is-secret" ||
+    h === "is secret"
+  );
+  const sourceIdx = headers.indexOf("source");
+
+  for (const line of lines.slice(1)) {
+    const cols = line.split(",").map((c) => c.trim());
+    const variable = cols[varIdx] ?? "";
+    // skip empty variable names or section separator rows (e.g. "----- CONFIG -----")
+    if (!variable || variable.includes(" ")) continue;
+
+    const typeVal = (cols[typeIdx] ?? "").toLowerCase();
+    const secretVal = (cols[secretIdx] ?? "").toLowerCase();
+    const sourceVal = (cols[sourceIdx] ?? "").toLowerCase();
+
+    const isSecret = typeVal === "secret" ||
+      secretVal === "1" || secretVal === "true";
+    const isInfra = sourceVal === "infra" || sourceVal === "infrastructure" ||
+      sourceVal === "cloud";
+
+    result[variable] = { isSecret, isInfra };
+  }
+
+  return result;
+}
+
 export async function syncData(): Promise<MatrixPayload> {
   const syncResult = await run("rbw", ["sync"]);
   if (!syncResult.success) {
@@ -141,10 +180,15 @@ export async function syncData(): Promise<MatrixPayload> {
     environment: string;
   };
   const groups = new Map<string, Map<string, Entry[]>>();
+  const catalogEntryNames = new Map<string, string>(); // "client/project" → entry name
 
   for (const line of lines) {
     const parsed = parseEntryName(line);
     if (!parsed) continue;
+    if (parsed.environment.toLowerCase() === "catalog") {
+      catalogEntryNames.set(`${parsed.client}/${parsed.project}`, parsed.name);
+      continue;
+    }
     const { client, project } = parsed;
     if (!groups.has(client)) groups.set(client, new Map());
     const pmap = groups.get(client)!;
@@ -178,6 +222,14 @@ export async function syncData(): Promise<MatrixPayload> {
 
       if (environments.length === 0) continue;
 
+      const catalogKey = `${client}/${project}`;
+      let catalog: Record<string, CatalogEntry> = {};
+      const catalogEntryName = catalogEntryNames.get(catalogKey);
+      if (catalogEntryName) {
+        const catResult = await run("rbw", ["get", catalogEntryName]);
+        if (catResult.success) catalog = parseCatalog(catResult.stdout);
+      }
+
       projects.push({
         client,
         project,
@@ -185,6 +237,7 @@ export async function syncData(): Promise<MatrixPayload> {
         keys: Array.from(allKeys).sort(),
         data,
         entryNames,
+        catalog,
       });
     }
   }

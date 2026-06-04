@@ -1,5 +1,6 @@
 import { assertEquals, assertStrictEquals } from "@std/assert";
 import {
+  parseCatalog,
   parseEntryName,
   parseEnvContent,
   parseFullContent,
@@ -241,5 +242,107 @@ Deno.test("parseFullContent: preserves comment lines in notes", () => {
   assertEquals(parseFullContent("pw\n# comment\nKEY=val"), {
     password: "pw",
     notes: "# comment\nKEY=val",
+  });
+});
+
+// ── parseCatalog ───────────────────────────────────────────────────────────
+
+Deno.test("parseCatalog: empty csv returns empty object", () => {
+  assertEquals(parseCatalog(""), {});
+  assertEquals(parseCatalog("Variable,Type,Source"), {});
+});
+
+Deno.test("parseCatalog: format A — type=secret triggers isSecret", () => {
+  const csv =
+    "Variable,Type,Source\nDB_URL,secret,infra\nAPP_ENV,envvar,dotenv";
+  assertEquals(parseCatalog(csv), {
+    DB_URL: { isSecret: true, isInfra: true },
+    APP_ENV: { isSecret: false, isInfra: false },
+  });
+});
+
+Deno.test("parseCatalog: format B — secret=1 triggers isSecret", () => {
+  const csv = "Variable,Secret,Source\nTOKEN,1,dotenv\nHOST,0,infra";
+  assertEquals(parseCatalog(csv), {
+    TOKEN: { isSecret: true, isInfra: false },
+    HOST: { isSecret: false, isInfra: true },
+  });
+});
+
+Deno.test("parseCatalog: secret=true (string) triggers isSecret", () => {
+  const csv = "Variable,Secret,Source\nKEY,true,dotenv";
+  assertEquals(parseCatalog(csv), {
+    KEY: { isSecret: true, isInfra: false },
+  });
+});
+
+Deno.test("parseCatalog: is_secret column variant", () => {
+  const csv = "Variable,Is_Secret,Source\nSECRET_KEY,1,dotenv";
+  assertEquals(parseCatalog(csv), {
+    SECRET_KEY: { isSecret: true, isInfra: false },
+  });
+});
+
+Deno.test("parseCatalog: is-secret column variant", () => {
+  const csv = "Variable,Is-Secret,Source\nSECRET_KEY,1,dotenv";
+  assertEquals(parseCatalog(csv), {
+    SECRET_KEY: { isSecret: true, isInfra: false },
+  });
+});
+
+Deno.test("parseCatalog: is secret column variant", () => {
+  const csv = "Variable,Is Secret,Source\nSECRET_KEY,1,dotenv";
+  assertEquals(parseCatalog(csv), {
+    SECRET_KEY: { isSecret: true, isInfra: false },
+  });
+});
+
+Deno.test("parseCatalog: case-insensitive columns and values", () => {
+  const csv = "VARIABLE,TYPE,SOURCE\nDB,SECRET,INFRA\nFOO,ENVVAR,DOTENV";
+  assertEquals(parseCatalog(csv), {
+    DB: { isSecret: true, isInfra: true },
+    FOO: { isSecret: false, isInfra: false },
+  });
+});
+
+Deno.test("parseCatalog: skips section separator rows with spaces", () => {
+  const csv =
+    "Variable,Type,Source\n----- CONFIG -----,,\nAPP_ENV,envvar,dotenv";
+  assertEquals(parseCatalog(csv), {
+    APP_ENV: { isSecret: false, isInfra: false },
+  });
+});
+
+Deno.test("parseCatalog: both badges apply to same variable", () => {
+  const csv = "Variable,Type,Source\nDB_PASS,secret,infra";
+  assertEquals(parseCatalog(csv), {
+    DB_PASS: { isSecret: true, isInfra: true },
+  });
+});
+
+Deno.test("parseCatalog: variable not in catalog returns no entry", () => {
+  const csv = "Variable,Type,Source\nFOO,config,dotenv";
+  const result = parseCatalog(csv);
+  assertEquals(result["MISSING"], undefined);
+});
+
+Deno.test("parseCatalog: config type is not secret", () => {
+  const csv = "Variable,Type,Source\nSITE_NAME,config,dotenv";
+  assertEquals(parseCatalog(csv), {
+    SITE_NAME: { isSecret: false, isInfra: false },
+  });
+});
+
+Deno.test("parseCatalog: source=infrastructure triggers isInfra", () => {
+  const csv = "Variable,Type,Source\nDB_HOST,envvar,infrastructure";
+  assertEquals(parseCatalog(csv), {
+    DB_HOST: { isSecret: false, isInfra: true },
+  });
+});
+
+Deno.test("parseCatalog: source=cloud triggers isInfra", () => {
+  const csv = "Variable,Type,Source\nBUCKET,envvar,cloud";
+  assertEquals(parseCatalog(csv), {
+    BUCKET: { isSecret: false, isInfra: true },
   });
 });
