@@ -16,6 +16,10 @@ based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `rbw unlock` is now called at startup with inherited stdio, enabling
   terminal-based pinentry (e.g. `pinentry-curses`) instead of the GNOME popup.
 
+### Fixed
+
+- Refreshing the page no longer stops the process; shutdown is deferred 2 seconds and cancelled if the browser reconnects.
+
 ## [0.9.0] - 2026-05-29
 
 Initial release.

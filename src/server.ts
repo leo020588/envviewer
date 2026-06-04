@@ -12,7 +12,15 @@ export function createHandler(
   refreshData: () => Promise<MatrixPayload>,
   shutdown: () => void,
 ): (req: Request) => Promise<Response> {
+  let shutdownTimer: ReturnType<typeof setTimeout> | null = null;
+
   return async (req: Request): Promise<Response> => {
+    // Cancel any deferred shutdown — a new request means the page was refreshed, not closed
+    if (shutdownTimer !== null) {
+      clearTimeout(shutdownTimer);
+      shutdownTimer = null;
+    }
+
     const url = new URL(req.url);
     const { pathname } = url;
 
@@ -94,7 +102,7 @@ export function createHandler(
     }
 
     if (pathname === "/api/shutdown" && req.method === "POST") {
-      shutdown();
+      shutdownTimer = setTimeout(shutdown, 2000);
       return new Response(null, { status: 204 });
     }
 
