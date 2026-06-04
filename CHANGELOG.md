@@ -7,8 +7,9 @@ based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- Catalog support: `--env-catalog` vault entries annotate variables with 🔑
-  (secret) and 🏗️ (infra) badges instead of appearing as an environment column.
+- Catalog support: vault entries named `*--env-catalog` annotate variables with
+  secret, infra, and config SVG badges instead of appearing as an environment
+  column.
 
 ### Changed
 

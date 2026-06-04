@@ -52,6 +52,15 @@ const COPY_SVG =
 const EDIT_SVG =
   '<svg class="copy-icon" fill="currentColor" aria-hidden="true"><use href="#icon-pencil"/></svg>';
 
+const SECRET_BADGE_SVG =
+  '<svg class="key-badge-icon" fill="#D4AF37" aria-hidden="true" title="Secret"><use href="#icon-key-vertical"/></svg>';
+
+const INFRA_BADGE_SVG =
+  '<svg class="key-badge-icon" fill="#FF795C" aria-hidden="true" title="Infrastructure"><use href="#icon-dns"/></svg>';
+
+const CONFIG_BADGE_SVG =
+  '<svg class="key-badge-icon" fill="#87B7FF" aria-hidden="true" title="Config"><use href="#icon-cog"/></svg>';
+
 const TIMING = {
   CLIP_CLEAR: 15_000, // ms before clipboard is auto-wiped
   TOAST_ERROR: 6_000, // error toasts (API / init / refresh failures)
@@ -404,7 +413,9 @@ function keyBadges(
 ): string {
   const entry = catalog[key];
   if (!entry) return "";
-  return (entry.isSecret ? "🔑" : "") + (entry.isInfra ? "🏗️" : "");
+  return (entry.isSecret ? SECRET_BADGE_SVG : "") +
+    (entry.isInfra ? INFRA_BADGE_SVG : "") +
+    (entry.isConfig ? CONFIG_BADGE_SVG : "");
 }
 
 function renderKeyRows(

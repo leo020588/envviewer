@@ -1,6 +1,7 @@
 export interface CatalogEntry {
   isSecret: boolean;
   isInfra: boolean;
+  isConfig: boolean;
 }
 
 export interface ProjectMatrix {

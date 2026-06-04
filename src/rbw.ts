@@ -141,8 +141,9 @@ export function parseCatalog(
       secretVal === "1" || secretVal === "true";
     const isInfra = sourceVal === "infra" || sourceVal === "infrastructure" ||
       sourceVal === "cloud";
+    const isConfig = typeVal === "config";
 
-    result[variable] = { isSecret, isInfra };
+    result[variable] = { isSecret, isInfra, isConfig };
   }
 
   return result;

@@ -512,10 +512,17 @@ body {
 }
 
 .key-badges {
-  margin-left: auto;
-  font-size: 11px;
-  line-height: 1;
+  margin-left: 6px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
   flex-shrink: 0;
+}
+
+.key-badge-icon {
+  width: 1em;
+  height: 1em;
+  display: block;
 }
 
 .matrix-table tbody tr:nth-child(even) td {
