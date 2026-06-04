@@ -5,6 +5,11 @@ based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Compiled binaries now have read access, which is required for `--upgrade` to
+  atomically rename the downloaded binary into place.
+
 ## [0.10.1] - 2026-06-04
 
 ### Fixed

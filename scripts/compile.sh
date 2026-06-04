@@ -25,7 +25,7 @@ compile_platform() {
   esac
 
   echo "  [$platform] $output"
-  deno compile --allow-run="$allow_run" --allow-net --allow-write \
+  deno compile --allow-run="$allow_run" --allow-net --allow-read --allow-write \
     --target "$target" --output "$output" main.ts
 }
 
