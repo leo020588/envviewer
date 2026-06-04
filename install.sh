@@ -2,6 +2,8 @@
 set -euo pipefail
 
 SCRIPT_NAME="${0##*/}"
+# These mirror APP_REPO and APP_NAME in src/version.ts.
+# They must be kept in sync manually — this script runs standalone without the repo.
 DEFAULT_REPO="leo020588/envviewer"
 DEFAULT_BIN_NAME="envviewer"
 

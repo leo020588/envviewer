@@ -19,9 +19,11 @@ jobs:
         with:
           deno-version: "~2.8"
 
-      - name: Verify tag matches version.ts
+      - name: Extract metadata from version.ts
         run: |
+          APP_NAME=$(grep 'APP_NAME' src/version.ts | sed 's/.*"\(.*\)".*/\1/')
           CODE_VERSION=$(grep 'APP_VERSION' src/version.ts | sed 's/.*"\(.*\)".*/\1/')
+          echo "APP_NAME=$APP_NAME" >> "$GITHUB_ENV"
           if [ "$GITHUB_REF_NAME" != "v${CODE_VERSION}" ]; then
             echo "Error: tag $GITHUB_REF_NAME does not match version.ts (v${CODE_VERSION})"
             exit 1
@@ -40,10 +42,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/envviewer-linux-amd64
-            dist/envviewer-linux-arm64
-            dist/envviewer-macos-amd64
-            dist/envviewer-macos-arm64
-            dist/envviewer-windows-amd64.exe
+            dist/${{ env.APP_NAME }}-linux-amd64
+            dist/${{ env.APP_NAME }}-linux-arm64
+            dist/${{ env.APP_NAME }}-macos-amd64
+            dist/${{ env.APP_NAME }}-macos-arm64
+            dist/${{ env.APP_NAME }}-windows-amd64.exe
           body_path: release_notes.txt
           fail_on_unmatched_files: true

@@ -10,6 +10,9 @@ based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Catalog support: vault entries named `*--env-catalog` annotate variables with
   secret, infra, and config SVG badges instead of appearing as an environment
   column.
+- Version update notifications: startup prints a message when a newer GitHub
+  release is available, and the sidebar shows a `↑ vX.X.X` badge in the web UI.
+- `--upgrade` flag to download and replace the binary with the latest release.
 
 ### Changed
 
@@ -18,7 +21,8 @@ based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
-- Refreshing the page no longer stops the process; shutdown is deferred 2 seconds and cancelled if the browser reconnects.
+- Refreshing the page no longer stops the process; shutdown is deferred 2
+  seconds and cancelled if the browser reconnects.
 
 ## [0.9.0] - 2026-05-29
 

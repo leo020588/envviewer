@@ -11,6 +11,8 @@ export function createHandler(
   getData: () => MatrixPayload,
   refreshData: () => Promise<MatrixPayload>,
   shutdown: () => void,
+  getLatestVersion: () => string | null = () => null,
+  shutdownDelayMs = 2000,
 ): (req: Request) => Promise<Response> {
   let shutdownTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -101,8 +103,15 @@ export function createHandler(
       return Response.json({ ok: true });
     }
 
+    if (pathname === "/api/version" && req.method === "GET") {
+      return Response.json({
+        current: APP_VERSION,
+        latest: getLatestVersion(),
+      });
+    }
+
     if (pathname === "/api/shutdown" && req.method === "POST") {
-      shutdownTimer = setTimeout(shutdown, 2000);
+      shutdownTimer = setTimeout(shutdown, shutdownDelayMs);
       return new Response(null, { status: 204 });
     }
 

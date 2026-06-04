@@ -2,9 +2,10 @@ import { buildHelpText, parseArgs } from "./src/cli.ts";
 import { syncData, unlockVault } from "./src/rbw.ts";
 import { createHandler } from "./src/server.ts";
 import type { MatrixPayload } from "./src/types.ts";
+import { fetchLatestVersion, selfUpdate } from "./src/update.ts";
 import { APP_NAME, APP_VERSION } from "./src/version.ts";
 
-const { help, version, noOpen, port } = parseArgs(Deno.args);
+const { help, version, upgrade, noOpen, port } = parseArgs(Deno.args);
 
 if (help) {
   console.log(buildHelpText());
@@ -16,6 +17,11 @@ if (version) {
   Deno.exit(0);
 }
 
+if (upgrade) {
+  await selfUpdate();
+  Deno.exit(0);
+}
+
 console.log("Unlocking vault…");
 const unlocked = await unlockVault();
 if (!unlocked) {
@@ -24,7 +30,10 @@ if (!unlocked) {
 }
 
 console.log("Syncing vault data…");
-let cache: MatrixPayload = await syncData();
+let [cache, latestVersion]: [MatrixPayload, string | null] = await Promise.all([
+  syncData(),
+  fetchLatestVersion(),
+]);
 
 if (cache.error) {
   console.error(`[warn] ${cache.error}`);
@@ -47,10 +56,16 @@ const handler = createHandler(
     console.log("Shutting down (browser tab closed).");
     ac.abort();
   },
+  () => latestVersion,
 );
 
 const url = `http://localhost:${port}`;
 console.log(`Listening on ${url}`);
+if (latestVersion && latestVersion !== APP_VERSION) {
+  console.log(
+    `New version available: v${latestVersion} — run with --upgrade to install it.`,
+  );
+}
 
 if (!noOpen) {
   openBrowser(url);

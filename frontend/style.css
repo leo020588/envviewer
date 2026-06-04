@@ -263,6 +263,12 @@ body {
   flex-shrink: 0;
 }
 
+#update-badge {
+  color: var(--warn);
+  margin-left: 2px;
+  cursor: default;
+}
+
 .menu-item {
   display: flex;
   align-items: center;

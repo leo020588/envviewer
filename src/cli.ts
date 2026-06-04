@@ -3,6 +3,7 @@ import { APP_NAME, APP_VERSION } from "./version.ts";
 export type ParsedArgs = {
   help: boolean;
   version: boolean;
+  upgrade: boolean;
   noOpen: boolean;
   port: number;
 };
@@ -18,6 +19,7 @@ Options:
   -p, --port <port>   Port to listen on (default: 7080)
   --no-open           Do not open the browser automatically
   --version           Show the app version
+  --upgrade           Download and install the latest release
   -h, --help          Show this help text
 
 Requirements:
@@ -41,11 +43,15 @@ export function parseArgs(args: string[]): ParsedArgs {
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "-h" || args[i] === "--help") {
-      return { help: true, version: false, noOpen, port };
+      return { help: true, version: false, upgrade: false, noOpen, port };
     }
 
     if (args[i] === "--version") {
-      return { help: false, version: true, noOpen, port };
+      return { help: false, version: true, upgrade: false, noOpen, port };
+    }
+
+    if (args[i] === "--upgrade") {
+      return { help: false, version: false, upgrade: true, noOpen, port };
     }
 
     if ((args[i] === "--port" || args[i] === "-p") && args[i + 1]) {
@@ -63,5 +69,5 @@ export function parseArgs(args: string[]): ParsedArgs {
     }
   }
 
-  return { help: false, version: false, noOpen, port };
+  return { help: false, version: false, upgrade: false, noOpen, port };
 }

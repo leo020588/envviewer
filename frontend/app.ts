@@ -107,6 +107,24 @@ async function init(): Promise<void> {
     setError(err.message);
     showToast(esc(err.message), "error", TIMING.TOAST_ERROR);
   }
+  checkForUpdate();
+}
+
+async function checkForUpdate(): Promise<void> {
+  try {
+    const { current, latest } = await api<{
+      current: string;
+      latest: string | null;
+    }>("/api/version");
+    if (latest && latest !== current) {
+      const badge = $("update-badge");
+      badge.textContent = ` ↑ v${latest}`;
+      badge.title = "New version available — run with --upgrade to install it";
+      badge.removeAttribute("hidden");
+    }
+  } catch {
+    // non-critical; ignore failures
+  }
 }
 
 async function doRefresh(): Promise<void> {
