@@ -5,6 +5,8 @@ based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.10.2] - 2026-06-04
+
 ### Fixed
 
 - Compiled binaries now have read access, which is required for `--upgrade` to
