@@ -5,7 +5,7 @@
     "fmt": "deno fmt",
     "lint": "deno lint",
     "test": "deno test src",
-    "check": "deno task transpile && deno task fmt && deno task lint && deno task test",
+    "check": "deno check && deno task transpile && deno task fmt && deno task lint && deno task test",
     "dev": "deno task transpile && deno run --allow-run --allow-net --allow-read --allow-write main.ts --no-open",
     "start": "deno task transpile && deno run --allow-run --allow-net --allow-read --allow-write main.ts",
     "compile": "deno task transpile && deno compile --allow-run --allow-net --allow-read --allow-write --output dist/envviewer main.ts",
