@@ -1,4 +1,9 @@
-import type { CatalogEntry, MatrixPayload, ProjectMatrix } from "./types.ts";
+import type {
+  CatalogEntry,
+  CatalogTable,
+  MatrixPayload,
+  ProjectMatrix,
+} from "./types.ts";
 
 const ENV_PRIORITY = [
   "development",
@@ -149,6 +154,26 @@ export function parseCatalog(
   return result;
 }
 
+// Parses the catalog CSV into a table, preserving the columns exactly as
+// authored (order and original case). Returns null when there is no `variable`
+// column — i.e. the content is not a recognisable catalog.
+export function parseCatalogTable(csv: string): CatalogTable | null {
+  const lines = csv.split("\n").map((l) => l.trim()).filter((l) => l);
+  if (!lines.length) return null;
+
+  const headers = lines[0].split(",").map((h) => h.trim());
+  const hasVariable = headers.some((h) => h.toLowerCase() === "variable");
+  if (!hasVariable) return null;
+
+  // Rows kept as-is, including section-separator rows (e.g. "--- CONFIG ---,,").
+  // Ragged rows are preserved; consumers index by column position.
+  const rows = lines.slice(1).map((line) =>
+    line.split(",").map((c) => c.trim())
+  );
+
+  return { headers, rows };
+}
+
 export async function syncData(): Promise<MatrixPayload> {
   const syncResult = await run("rbw", ["sync"]);
   if (!syncResult.success) {
@@ -225,10 +250,14 @@ export async function syncData(): Promise<MatrixPayload> {
 
       const catalogKey = `${client}/${project}`;
       let catalog: Record<string, CatalogEntry> = {};
+      let catalogTable: CatalogTable | undefined;
       const catalogEntryName = catalogEntryNames.get(catalogKey);
       if (catalogEntryName) {
         const catResult = await run("rbw", ["get", catalogEntryName]);
-        if (catResult.success) catalog = parseCatalog(catResult.stdout);
+        if (catResult.success) {
+          catalog = parseCatalog(catResult.stdout);
+          catalogTable = parseCatalogTable(catResult.stdout) ?? undefined;
+        }
       }
 
       projects.push({
@@ -239,6 +268,7 @@ export async function syncData(): Promise<MatrixPayload> {
         data,
         entryNames,
         catalog,
+        catalogTable,
       });
     }
   }

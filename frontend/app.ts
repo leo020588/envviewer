@@ -28,6 +28,7 @@ interface AppState {
   navIdx: number | null;
   changes: Map<string, ChangeInfo> | null;
   hiddenEnvs: Set<string>;
+  view: "variables" | "catalog";
 }
 
 interface NotesResponse {
@@ -80,6 +81,7 @@ const state: AppState = {
   navIdx: null,
   changes: null,
   hiddenEnvs: new Set(),
+  view: "variables",
 };
 
 // ── Bootstrap ──────────────────────────────────────────────────────────────
@@ -141,10 +143,10 @@ async function doRefresh(): Promise<void> {
     render();
     if (state.selClient && state.selProject) {
       const p = findProj(state.selClient, state.selProject);
-      if (p) renderMatrix(p);
+      if (p) renderMain();
       else {
         state.selClient = state.selProject = null;
-        showEmpty();
+        renderMain();
       }
     }
     if (state.data.error) {
@@ -292,7 +294,47 @@ function setError(msg: string): void {
 function render(): void {
   renderSidebar();
   updateStatus();
-  if (!state.selClient) showEmpty();
+  if (!state.selClient) {
+    renderTabs(null);
+    showEmpty();
+  }
+}
+
+// Renders the main content area for the selected project, respecting the active
+// tab (Variables / Catalog). Used by every code path that re-renders the table.
+function renderMain(): void {
+  const proj = state.selClient && state.selProject
+    ? findProj(state.selClient, state.selProject)
+    : undefined;
+  if (!proj) {
+    renderTabs(null);
+    showEmpty();
+    return;
+  }
+  renderTabs(proj);
+  if (state.view === "catalog" && proj.catalogTable) renderCatalog(proj);
+  else renderMatrix(proj);
+}
+
+// Populates the header tab strip — shown only when the project has a catalog.
+// The mask toggle is hidden on the Catalog tab (it only applies to values).
+function renderTabs(proj: ProjectMatrix | null): void {
+  const tabs = $("view-tabs");
+  const maskBtn = $("mask-btn");
+  if (!proj?.catalogTable) {
+    tabs.setAttribute("hidden", "");
+    tabs.innerHTML = "";
+    maskBtn.removeAttribute("hidden");
+    return;
+  }
+  const tab = (view: AppState["view"], label: string) =>
+    `<button class="view-tab${
+      state.view === view ? " active" : ""
+    }" data-view="${view}">${label}</button>`;
+  tabs.innerHTML = tab("variables", "Variables") + tab("catalog", "Catalog");
+  tabs.removeAttribute("hidden");
+  if (state.view === "catalog") maskBtn.setAttribute("hidden", "");
+  else maskBtn.removeAttribute("hidden");
 }
 
 function renderSidebar(): void {
@@ -441,6 +483,7 @@ function renderKeyRows(
   keys: string[],
   changeMap: Map<string, ChangeItem> | null,
   visibleEnvs: string[],
+  descriptions: Record<string, string>,
 ): string {
   const q = state.query.toLowerCase();
   return keys.map((key) => {
@@ -456,12 +499,35 @@ function renderKeyRows(
     const rowAttr = classes ? ` class="${classes}"` : "";
     const badges = keyBadges(key, proj.catalog);
     const badgeHtml = badges ? `<span class="key-badges">${badges}</span>` : "";
+    const desc = descriptions[key];
+    const title = desc ? escAttr(desc) : "Click to copy";
     return `<tr${rowAttr}><td class="key-col td-copyable" data-copy="${
       escAttr(key)
-    }" title="Click to copy">${
+    }" title="${title}">${
       isMatch ? hilight(key, q) : esc(key)
     }${badgeHtml}</td>${cells}</tr>`;
   }).join("");
+}
+
+// Maps variable → description text from the catalog's `description`/`desc`
+// column, when present. Section-separator rows (variable with a space) skipped.
+function catalogDescriptions(proj: ProjectMatrix): Record<string, string> {
+  const out: Record<string, string> = {};
+  const table = proj.catalogTable;
+  if (!table) return out;
+  const varIdx = table.headers.findIndex((h) => h.toLowerCase() === "variable");
+  const descIdx = table.headers.findIndex((h) => {
+    const l = h.toLowerCase();
+    return l === "description" || l === "desc";
+  });
+  if (varIdx === -1 || descIdx === -1) return out;
+  for (const row of table.rows) {
+    const variable = row[varIdx] ?? "";
+    if (!variable || variable.includes(" ")) continue;
+    const desc = row[descIdx] ?? "";
+    if (desc) out[variable] = desc;
+  }
+  return out;
 }
 
 function renderMatrix(proj: ProjectMatrix): void {
@@ -492,6 +558,7 @@ function renderMatrix(proj: ProjectMatrix): void {
   const differing = proj.keys.filter((k) => isRowDiffering(proj, k));
   const same = proj.keys.filter((k) => !isRowDiffering(proj, k));
   const colspan = visibleEnvs.length + 1;
+  const descriptions = catalogDescriptions(proj);
 
   // Column visibility toggles (only when there are 2+ environments)
   let t = "";
@@ -528,13 +595,13 @@ function renderMatrix(proj: ProjectMatrix): void {
   if (differing.length) {
     t +=
       `<tr class="group-header"><td colspan="${colspan}">Differing values (${differing.length})</td></tr>`;
-    t += renderKeyRows(proj, differing, changeMap, visibleEnvs);
+    t += renderKeyRows(proj, differing, changeMap, visibleEnvs, descriptions);
   }
 
   if (same.length) {
     t +=
       `<tr class="group-header"><td colspan="${colspan}">Same across all environments (${same.length})</td></tr>`;
-    t += renderKeyRows(proj, same, changeMap, visibleEnvs);
+    t += renderKeyRows(proj, same, changeMap, visibleEnvs, descriptions);
   }
 
   if (removedKeys.length) {
@@ -570,6 +637,91 @@ function renderMatrix(proj: ProjectMatrix): void {
   }
 }
 
+// Renders the catalog CSV as a table with the columns exactly as authored, the
+// variable cell decorated with badges, and a coverage panel cross-referencing
+// the catalog against the project's actual environment keys.
+function renderCatalog(proj: ProjectMatrix): void {
+  const table = proj.catalogTable!;
+  const varIdx = table.headers.findIndex((h) => h.toLowerCase() === "variable");
+  const colspan = table.headers.length;
+
+  const isSeparator = (variable: string) => !variable || variable.includes(" ");
+  const varCount =
+    table.rows.filter((r) => !isSeparator(r[varIdx] ?? "")).length;
+
+  $("main-title").textContent = `${proj.client} / ${proj.project}`;
+  $("main-subtitle").textContent = `Catalog · ${varCount} documented variable${
+    varCount !== 1 ? "s" : ""
+  }`;
+
+  let t = renderCatalogCoverage(proj);
+  t +=
+    '<div class="matrix-wrap"><table class="matrix-table catalog-table"><thead><tr>';
+  t += table.headers.map((h, i) =>
+    `<th${i === varIdx ? ' class="key-col"' : ""}>${esc(h)}</th>`
+  ).join("");
+  t += "</tr></thead><tbody>";
+
+  for (const row of table.rows) {
+    const variable = row[varIdx] ?? "";
+    if (isSeparator(variable)) {
+      const label = variable.replace(/^[-\s]+|[-\s]+$/g, "") || "—";
+      t += `<tr class="group-header"><td colspan="${colspan}">${
+        esc(label)
+      }</td></tr>`;
+      continue;
+    }
+    t += "<tr>";
+    t += table.headers.map((_h, i) => {
+      const cell = row[i] ?? "";
+      if (i === varIdx) {
+        const badges = keyBadges(variable, proj.catalog);
+        const badgeHtml = badges
+          ? `<span class="key-badges">${badges}</span>`
+          : "";
+        return `<td class="key-col td-copyable" data-copy="${
+          escAttr(variable)
+        }" title="Click to copy">${esc(variable)}${badgeHtml}</td>`;
+      }
+      return `<td>${esc(cell)}</td>`;
+    }).join("");
+    t += "</tr>";
+  }
+
+  t += "</tbody></table></div>";
+  $("main-content").innerHTML = t;
+}
+
+// Compares catalog-documented variables against the project's actual env keys.
+function renderCatalogCoverage(proj: ProjectMatrix): string {
+  const documented = new Set(Object.keys(proj.catalog));
+  const envKeys = new Set(proj.keys);
+  const undocumented = proj.keys.filter((k) => !documented.has(k));
+  const missing = [...documented].filter((k) => !envKeys.has(k)).sort();
+
+  if (!undocumented.length && !missing.length) {
+    return '<div class="catalog-coverage all-clear">' +
+      "All environment keys are documented in the catalog." +
+      "</div>";
+  }
+
+  const chips = (keys: string[], cls: string) =>
+    keys.map((k) => `<span class="coverage-chip ${cls}">${esc(k)}</span>`)
+      .join("");
+
+  const group = (label: string, keys: string[], cls: string) =>
+    keys.length
+      ? `<div class="coverage-group"><span class="coverage-label">${label} (${keys.length})</span><span class="coverage-chips">${
+        chips(keys, cls)
+      }</span></div>`
+      : "";
+
+  return '<div class="catalog-coverage">' +
+    group("In env, not in catalog", undocumented, "chip-undocumented") +
+    group("In catalog, no env value", missing, "chip-missing") +
+    "</div>";
+}
+
 // ── Interactions ───────────────────────────────────────────────────────────
 
 function findProj(
@@ -591,18 +743,18 @@ function toggleClient(client: string): void {
 function selectProj(client: string, project: string): void {
   if (state.selClient !== client || state.selProject !== project) {
     state.hiddenEnvs = new Set();
+    state.view = "variables";
   }
   state.selClient = client;
   state.selProject = project;
-  renderMatrix(findProj(client, project)!);
+  renderMain();
   renderSidebar();
 }
 
 function toggleMask(): void {
   state.masked = !state.masked;
   $("mask-btn").textContent = state.masked ? "Show Values" : "Hide Values";
-  const p = findProj(state.selClient!, state.selProject!);
-  if (p) renderMatrix(p);
+  renderMain();
 }
 
 // ── Clipboard auto-clear ───────────────────────────────────────────────────
@@ -767,8 +919,7 @@ async function showNotesModal(entryName: string): Promise<void> {
 $("search").addEventListener("input", (e: Event) => {
   state.query = (e.target as HTMLInputElement).value;
   renderSidebar();
-  const p = findProj(state.selClient!, state.selProject!);
-  if (p) renderMatrix(p);
+  renderMain();
 });
 
 $("sidebar-tree").addEventListener("click", (e: Event) => {
@@ -789,13 +940,22 @@ $("mask-btn").addEventListener("click", toggleMask);
 $("main").addEventListener("click", (e: Event) => {
   const target = e.target as Element;
 
+  const tab = target.closest<HTMLButtonElement>(".view-tab");
+  if (tab) {
+    const view = tab.dataset.view as AppState["view"];
+    if (view && view !== state.view) {
+      state.view = view;
+      renderMain();
+    }
+    return;
+  }
+
   const toggle = target.closest<HTMLButtonElement>(".env-toggle");
   if (toggle && !toggle.disabled) {
     const env = toggle.dataset.env!;
     if (state.hiddenEnvs.has(env)) state.hiddenEnvs.delete(env);
     else state.hiddenEnvs.add(env);
-    const p = findProj(state.selClient!, state.selProject!);
-    if (p) renderMatrix(p);
+    renderMain();
     return;
   }
 

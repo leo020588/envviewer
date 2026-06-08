@@ -91,6 +91,23 @@ Lines starting with `#` are treated as comments and ignored. Quoted values
 
 The **notes field** is optional and editable directly from the UI.
 
+### Catalog (optional)
+
+An entry named `<client>--<project>--env-catalog` documents a project's
+variables with a CSV in its password field:
+
+```
+Variable,Type,Secret,Source,Description
+DATABASE_URL,secret,1,infra,Postgres connection string
+DEBUG,config,0,,Enable verbose logging
+```
+
+A `Variable` column is required; `Type` (`secret`/`config`), `Secret`
+(`1`/`true`), and `Source` (`infra`/`cloud`) drive the badges shown next to each
+key, and a `Description` column appears as a tooltip. When a catalog exists, the
+project gains a **Catalog** tab that renders this table and flags any keys
+present in environments but undocumented (or documented with no env value).
+
 ## Usage
 
 ```

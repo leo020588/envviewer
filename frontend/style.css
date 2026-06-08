@@ -331,6 +331,37 @@ body {
   margin-top: 2px;
 }
 
+#view-tabs {
+  display: inline-flex;
+  gap: 2px;
+  margin-top: 8px;
+  padding: 2px;
+  background: var(--sidebar);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+}
+
+.view-tab {
+  padding: 4px 12px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.view-tab:hover {
+  color: var(--text);
+}
+
+.view-tab.active {
+  background: var(--accent);
+  color: #fff;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -529,6 +560,69 @@ body {
   width: 1em;
   height: 1em;
   display: block;
+}
+
+/* ── Catalog view ────────────────────────────────────── */
+
+.catalog-table td:not(.key-col) {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text);
+  white-space: normal;
+  max-width: 480px;
+}
+
+.catalog-coverage {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--sidebar);
+}
+
+.catalog-coverage.all-clear {
+  color: var(--success);
+  font-size: 13px;
+}
+
+.coverage-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.coverage-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.coverage-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.coverage-chip {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+.coverage-chip.chip-undocumented {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--warn);
+}
+
+.coverage-chip.chip-missing {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger);
 }
 
 .matrix-table tbody tr:nth-child(even) td {

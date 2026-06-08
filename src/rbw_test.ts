@@ -1,6 +1,7 @@
 import { assertEquals, assertStrictEquals } from "@std/assert";
 import {
   parseCatalog,
+  parseCatalogTable,
   parseEntryName,
   parseEnvContent,
   parseFullContent,
@@ -351,5 +352,63 @@ Deno.test("parseCatalog: source=cloud triggers isInfra", () => {
   const csv = "Variable,Type,Source\nBUCKET,envvar,cloud";
   assertEquals(parseCatalog(csv), {
     BUCKET: { isSecret: false, isInfra: true, isConfig: false },
+  });
+});
+
+// ── parseCatalogTable ──────────────────────────────────────────────────────
+
+Deno.test("parseCatalogTable: basic headers and rows", () => {
+  const csv =
+    "Variable,Type,Source\nDB_URL,secret,infra\nAPP_ENV,config,dotenv";
+  assertEquals(parseCatalogTable(csv), {
+    headers: ["Variable", "Type", "Source"],
+    rows: [
+      ["DB_URL", "secret", "infra"],
+      ["APP_ENV", "config", "dotenv"],
+    ],
+  });
+});
+
+Deno.test("parseCatalogTable: preserves authored column order and case", () => {
+  const csv = "Source,VARIABLE,Description\ninfra,DB_URL,Postgres DSN";
+  assertEquals(parseCatalogTable(csv), {
+    headers: ["Source", "VARIABLE", "Description"],
+    rows: [["infra", "DB_URL", "Postgres DSN"]],
+  });
+});
+
+Deno.test("parseCatalogTable: returns null without a variable column", () => {
+  assertStrictEquals(parseCatalogTable("Name,Type\nFOO,secret"), null);
+});
+
+Deno.test("parseCatalogTable: returns null for empty input", () => {
+  assertStrictEquals(parseCatalogTable(""), null);
+  assertStrictEquals(parseCatalogTable("\n\n"), null);
+});
+
+Deno.test("parseCatalogTable: header-only input yields no rows", () => {
+  assertEquals(parseCatalogTable("Variable,Type,Source"), {
+    headers: ["Variable", "Type", "Source"],
+    rows: [],
+  });
+});
+
+Deno.test("parseCatalogTable: keeps section-separator rows", () => {
+  const csv =
+    "Variable,Type,Source\n----- CONFIG -----,,\nAPP_ENV,config,dotenv";
+  assertEquals(parseCatalogTable(csv), {
+    headers: ["Variable", "Type", "Source"],
+    rows: [
+      ["----- CONFIG -----", "", ""],
+      ["APP_ENV", "config", "dotenv"],
+    ],
+  });
+});
+
+Deno.test("parseCatalogTable: preserves ragged rows", () => {
+  const csv = "Variable,Type,Source\nDB_URL,secret";
+  assertEquals(parseCatalogTable(csv), {
+    headers: ["Variable", "Type", "Source"],
+    rows: [["DB_URL", "secret"]],
   });
 });

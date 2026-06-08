@@ -5,6 +5,16 @@ based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Catalog view: projects with an `*--env-catalog` entry gain a Variables/Catalog
+  tab in the header. The Catalog tab renders the catalog CSV as a table (columns
+  as authored) with badges on each variable, plus a coverage panel listing keys
+  present in environments but undocumented and documented keys with no env
+  value.
+- Variable descriptions: a `description` column in the catalog is shown as a
+  tooltip on keys in the Variables view.
+
 ## [0.10.2] - 2026-06-04
 
 ### Fixed

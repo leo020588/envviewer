@@ -4,6 +4,11 @@ export interface CatalogEntry {
   isConfig: boolean;
 }
 
+export interface CatalogTable {
+  headers: string[]; // authored column headers, original case/order
+  rows: string[][]; // authored data rows (cells trimmed)
+}
+
 export interface ProjectMatrix {
   client: string;
   project: string;
@@ -12,6 +17,7 @@ export interface ProjectMatrix {
   data: Record<string, Record<string, string>>;
   entryNames: Record<string, string>; // environment → rbw entry name
   catalog: Record<string, CatalogEntry>; // variable name → metadata
+  catalogTable?: CatalogTable; // raw catalog CSV, columns as authored
 }
 
 export interface MatrixPayload {
