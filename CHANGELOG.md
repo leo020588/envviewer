@@ -5,6 +5,8 @@ based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-06-08
+
 ### Fixed
 
 - The empty tab strip no longer shows for projects without a catalog; the
