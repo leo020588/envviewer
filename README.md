@@ -108,11 +108,16 @@ key, and a `Description` column appears as a tooltip. When a catalog exists, the
 project gains a **Catalog** tab that renders this table and flags any keys
 present in environments but undocumented (or documented with no env value).
 
+Fields are split on commas, so avoid commas within a value (e.g. in a
+description).
+
 ## Usage
 
 ```
-envviewer [--port <port>] [--no-open] [--version] [--help]
+envviewer [--port <port>] [--no-open] [--upgrade] [--version] [--help]
 ```
+
+Use `--upgrade` to download and install the latest release in place.
 
 Run `envviewer --help` for the full list of options. The server binds to
 `127.0.0.1` only and is not accessible from other machines. Press `?` inside the
