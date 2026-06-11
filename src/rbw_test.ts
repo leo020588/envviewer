@@ -262,6 +262,14 @@ Deno.test("parseCatalog: format A — type=secret triggers isSecret", () => {
   });
 });
 
+Deno.test('parseCatalog: accepts "Name" as the variable column', () => {
+  const csv = "Name,Type,Source\nDB_URL,secret,infra\nAPP_ENV,config,dotenv";
+  assertEquals(parseCatalog(csv), {
+    DB_URL: { isSecret: true, isInfra: true, isConfig: false },
+    APP_ENV: { isSecret: false, isInfra: false, isConfig: true },
+  });
+});
+
 Deno.test("parseCatalog: format B — secret=1 triggers isSecret", () => {
   const csv = "Variable,Secret,Source\nTOKEN,1,dotenv\nHOST,0,infra";
   assertEquals(parseCatalog(csv), {
@@ -378,7 +386,15 @@ Deno.test("parseCatalogTable: preserves authored column order and case", () => {
 });
 
 Deno.test("parseCatalogTable: returns null without a variable column", () => {
-  assertStrictEquals(parseCatalogTable("Name,Type\nFOO,secret"), null);
+  assertStrictEquals(parseCatalogTable("Key,Type\nFOO,secret"), null);
+});
+
+Deno.test('parseCatalogTable: accepts "Name" as the variable column', () => {
+  const csv = "Name,Type,Source,EnvvarName\nDB_URL,secret,infra,DB_URL";
+  assertEquals(parseCatalogTable(csv), {
+    headers: ["Name", "Type", "Source", "EnvvarName"],
+    rows: [["DB_URL", "secret", "infra", "DB_URL"]],
+  });
 });
 
 Deno.test("parseCatalogTable: returns null for empty input", () => {

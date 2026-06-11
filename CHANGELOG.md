@@ -5,6 +5,11 @@ based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- The Catalog tab now appears for catalogs whose variable column is headed
+  `Name`; previously only a `Variable` column was recognised.
+
 ## [0.11.1] - 2026-06-08
 
 ### Fixed

@@ -19,6 +19,12 @@ const ENV_PRIORITY = [
   "prod",
 ];
 
+// The catalog's variable column may be headed "Variable" or "Name".
+export function isVariableHeader(header: string): boolean {
+  const l = header.trim().toLowerCase();
+  return l === "variable" || l === "name";
+}
+
 export function sortEnvironments(envs: string[]): string[] {
   return [...envs].sort((a, b) => {
     const ai = ENV_PRIORITY.indexOf(a.toLowerCase());
@@ -122,7 +128,7 @@ export function parseCatalog(
   if (lines.length < 2) return result;
 
   const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
-  const varIdx = headers.indexOf("variable");
+  const varIdx = headers.findIndex(isVariableHeader);
   if (varIdx === -1) return result;
 
   const typeIdx = headers.indexOf("type");
@@ -162,7 +168,7 @@ export function parseCatalogTable(csv: string): CatalogTable | null {
   if (!lines.length) return null;
 
   const headers = lines[0].split(",").map((h) => h.trim());
-  const hasVariable = headers.some((h) => h.toLowerCase() === "variable");
+  const hasVariable = headers.some(isVariableHeader);
   if (!hasVariable) return null;
 
   // Rows kept as-is, including section-separator rows (e.g. "--- CONFIG ---,,").

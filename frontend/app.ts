@@ -509,13 +509,21 @@ function renderKeyRows(
   }).join("");
 }
 
+// The catalog's variable column may be headed "Variable" or "Name".
+function findVariableIdx(headers: string[]): number {
+  return headers.findIndex((h) => {
+    const l = h.toLowerCase();
+    return l === "variable" || l === "name";
+  });
+}
+
 // Maps variable → description text from the catalog's `description`/`desc`
 // column, when present. Section-separator rows (variable with a space) skipped.
 function catalogDescriptions(proj: ProjectMatrix): Record<string, string> {
   const out: Record<string, string> = {};
   const table = proj.catalogTable;
   if (!table) return out;
-  const varIdx = table.headers.findIndex((h) => h.toLowerCase() === "variable");
+  const varIdx = findVariableIdx(table.headers);
   const descIdx = table.headers.findIndex((h) => {
     const l = h.toLowerCase();
     return l === "description" || l === "desc";
@@ -642,7 +650,7 @@ function renderMatrix(proj: ProjectMatrix): void {
 // the catalog against the project's actual environment keys.
 function renderCatalog(proj: ProjectMatrix): void {
   const table = proj.catalogTable!;
-  const varIdx = table.headers.findIndex((h) => h.toLowerCase() === "variable");
+  const varIdx = findVariableIdx(table.headers);
   const colspan = table.headers.length;
 
   const isSeparator = (variable: string) => !variable || variable.includes(" ");
