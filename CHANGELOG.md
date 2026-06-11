@@ -5,6 +5,8 @@ based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.11.2] - 2026-06-11
+
 ### Fixed
 
 - The Catalog tab now appears for catalogs whose variable column is headed
